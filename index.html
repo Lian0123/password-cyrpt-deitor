@@ -4,7 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#5c8dff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="CryptoFlow" />
   <link rel="manifest" href="manifest.json" />
+  <link rel="alternate" type="application/json" href="webmcp.json" title="WebMCP Protocol" />
   <title>Crypto Flow Studio</title>
     <meta name="description" content="Crypto Flow Studio 是可拖曳節點的加密流程工具，支援 AES、RSA、SHA-256、ECC、DLog、PWA、i18n 與 Node/TS 程式碼匯出。" />
     <meta name="keywords" content="crypto, encryption, AES, RSA, SHA-256, ECC, DLog, React, PWA, WebMCP" />
@@ -13,12 +18,12 @@
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Crypto Flow Studio" />
     <meta property="og:description" content="可拖曳節點的多演算法加解密流程工具，支援 PWA、i18n 與程式碼匯出。" />
-    <meta property="og:url" content="https://github.com/Lian0123/password-cyrpt-deitor" />
+    <meta property="og:url" content="https://github.com/Lian0123/password-encrypt-editor" />
     <meta property="og:image" content="docs/overview.svg" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Crypto Flow Studio" />
     <meta name="twitter:description" content="Single-file React crypto pipeline editor with code generator and PWA support." />
-    <link rel="canonical" href="https://github.com/Lian0123/password-cyrpt-deitor" />
+    <link rel="canonical" href="https://github.com/Lian0123/password-encrypt-editor" />
   <style>
     :root {
       --bg: #0b1020;
@@ -89,13 +94,28 @@
     body.theme-light { background: #efefef; }
     .app { max-width: 1380px; margin: 0 auto; padding: 16px; display: grid; gap: 14px; }
     .header,.card { background: linear-gradient(180deg, var(--panel) 0%, var(--surface-soft) 100%); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .card { transition: transform .2s ease, box-shadow .25s ease, border-color .25s ease; }
+    .card:hover { transform: translateY(-1px); box-shadow: 0 10px 28px rgba(0,0,0,.16); }
     .header { padding: 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .header .row { align-items: center; gap: 10px; }
     .title { font-size: 21px; font-weight: 800; }
     .subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
     .card { padding: 12px; }
     .grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 12px; }
     .panel2 { display:grid; grid-template-rows: auto auto 1fr; gap:12px; }
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: stretch; }
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: stretch;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--surface-alt);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.03);
+    }
+    .toolbar > label { margin: 0; }
     .row > * { min-width: 0; }
     .mini { font-size: 11px; color: var(--muted); }
     .badge { display: inline-flex; align-items:center; border:1px solid var(--line); border-radius:999px; padding:4px 9px; font-size:12px; background:var(--surface-alt); color:var(--muted); }
@@ -106,7 +126,11 @@
     }
     input[type="range"] { width: 100%; }
     textarea { min-height: 108px; resize: vertical; line-height: 1.45; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
-    .button { appearance:none; border:1px solid var(--line); background:var(--button-bg); color:var(--text); border-radius:10px; padding:8px 11px; font-size:12px; cursor:pointer; min-height: 34px; }
+    .button { appearance:none; border:1px solid var(--line); background:var(--button-bg); color:var(--text); border-radius:12px; padding:8px 12px; font-size:13px; cursor:pointer; min-height: 40px; transition: transform .15s ease, filter .2s ease, border-color .2s ease, box-shadow .2s ease; display:inline-flex; align-items:center; justify-content:center; }
+    .button:hover { transform: translateY(-1px); filter: brightness(1.03); box-shadow: 0 4px 14px rgba(92,141,255,.14); }
+    .button:active { transform: translateY(0); }
+    .button:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+    .button { font-weight: 600; letter-spacing: .15px; white-space: nowrap; text-align: center; }
     .button.primary { background: var(--primary); border-color: #7ca2ff; color:white; }
     body.theme-light .button.primary { color: #ffffff; }
     .button.ok { background: var(--button-ok); border-color: var(--button-ok-line); }
@@ -119,6 +143,7 @@
     .pipeline { display:grid; gap:8px; margin-top:10px; max-height: 460px; overflow:auto; padding-right:3px; }
     .node { border:1px solid var(--line); background:linear-gradient(180deg, var(--panel-2) 0%, var(--surface-node) 100%); border-radius:12px; padding:9px; }
     .node.dragging { opacity:.45; border-style:dashed; }
+    .node { animation: fadeInUp .22s ease; }
     .node-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px; }
     .node-title { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; }
     .drag-handle { cursor: grab; border:1px dashed var(--line); border-radius:8px; padding:3px 8px; font-size:11px; color:var(--muted); }
@@ -136,9 +161,19 @@
       border:1px dashed var(--line); border-radius:12px; background:var(--surface-flow);
     }
     .flow-item { border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:8px; font-size:12px; }
+    .flow-item { transition: background .2s ease, border-color .2s ease; }
     .arrow { align-self:center; justify-self:center; color:var(--muted); font-weight:700; }
     .footer { color: var(--muted); font-size: 12px; text-align: center; padding-bottom: 6px; line-height: 1.6; }
     a { color: var(--primary); }
+    @media (min-width: 981px) {
+      .row .button { min-width: 112px; }
+      .toolbar .button { min-width: 124px; }
+      .node-top .row .button { min-width: 48px; }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
     @media (max-width: 980px) {
       .grid { grid-template-columns:1fr; }
       .panel2 { grid-template-rows: auto; }
@@ -150,6 +185,7 @@
       .row { display:grid; grid-template-columns:1fr; align-items:stretch; }
       label { min-width: 100%; }
       .flow-item { min-width: 110px; }
+      .toolbar .button { min-width: 100%; }
     }
   </style>
 </head>
@@ -241,6 +277,14 @@
 
     i18next.init({ lng: "zh", fallbackLng: "en", resources: I18N_RES });
 
+    function normalizeLang(value) {
+      if (!value) return "zh";
+      const lower = String(value).toLowerCase();
+      if (lower.startsWith("zh")) return "zh";
+      if (lower.startsWith("ja")) return "ja";
+      return "en";
+    }
+
     const ALGORITHM_GROUPS = {
       cipher: ["AES", "DES", "TripleDES", "Rabbit", "RC4", "RC4Drop"],
       hash: ["MD5", "SHA1", "SHA224", "SHA256", "SHA384", "SHA512", "SHA3", "RIPEMD160"],
@@ -318,21 +362,36 @@
       return btoa(String.fromCharCode(...out));
     }
 
+    function shouldApplySpice(node) {
+      return node.kind === "hash" || node.mode === "encrypt" || node.mode === "encode" || node.mode === "encode/decode";
+    }
+
+    function applySpice(text, node) {
+      const salt = String(node.salt || "");
+      const pepper = String(node.pepper || "");
+      if (!salt && !pepper) return text;
+      const placement = node.spPlacement || "wrap";
+      if (placement === "prefix") return `${salt}${pepper}${text}`;
+      if (placement === "suffix") return `${text}${salt}${pepper}`;
+      return `${salt}${text}${pepper}`;
+    }
+
     function defaultNode(kind = "cipher") {
-      if (kind === "cipher") return { id: uid(), enabled: true, kind, algorithm: "AES", mode: "encrypt", key: "", iv: "", iterations: 1 };
-      if (kind === "hash") return { id: uid(), enabled: true, kind, algorithm: "SHA256", mode: "hash", iterations: 1, outputEncoding: "Hex" };
-      if (kind === "codec") return { id: uid(), enabled: true, kind, algorithm: "Base64", mode: "encode", iterations: 1 };
-      if (kind === "custom") return { id: uid(), enabled: true, kind, algorithm: "Caesar", mode: "encode", iterations: 1, shift: 3, xorKey: "secret" };
+      if (kind === "cipher") return { id: uid(), enabled: true, kind, algorithm: "AES", mode: "encrypt", key: "", iv: "", iterations: 1, salt: "", pepper: "", spPlacement: "wrap" };
+      if (kind === "hash") return { id: uid(), enabled: true, kind, algorithm: "SHA256", mode: "hash", iterations: 1, outputEncoding: "Hex", salt: "", pepper: "", spPlacement: "wrap" };
+      if (kind === "codec") return { id: uid(), enabled: true, kind, algorithm: "Base64", mode: "encode", iterations: 1, salt: "", pepper: "", spPlacement: "wrap" };
+      if (kind === "custom") return { id: uid(), enabled: true, kind, algorithm: "Caesar", mode: "encode", iterations: 1, shift: 3, xorKey: "secret", salt: "", pepper: "", spPlacement: "wrap" };
       return {
         id: uid(), enabled: true, kind: "asymmetric", algorithm: "RSA", mode: "encrypt", iterations: 1,
         rsaPublicKey: "", rsaPrivateKey: "", eccCurve: "secp256k1", eccPrivateKey: "", eccPeerPublicKey: "",
-        dlogPrime: "2147483647", dlogGenerator: "5", dlogPrivate: "12345", dlogPeerPublic: ""
+        dlogPrime: "2147483647", dlogGenerator: "5", dlogPrivate: "12345", dlogPeerPublic: "", salt: "", pepper: "", spPlacement: "wrap"
       };
     }
 
     function summary(node) {
-      if (node.kind === "custom" && node.algorithm === "Caesar") return `Caesar(${node.shift || 3})/${node.mode}/x${node.iterations}`;
-      return `${node.algorithm}/${node.mode}/x${node.iterations}`;
+      const spice = node.salt || node.pepper ? " +spice" : "";
+      if (node.kind === "custom" && node.algorithm === "Caesar") return `Caesar(${node.shift || 3})/${node.mode}/x${node.iterations}${spice}`;
+      return `${node.algorithm}/${node.mode}/x${node.iterations}${spice}`;
     }
 
     function copyText(text) {
@@ -350,7 +409,7 @@
 
     function generateNodeProgram(config, isTs) {
       const header = isTs
-        ? `import CryptoJS from "crypto-js";\nimport { JSEncrypt } from "jsencrypt";\nimport elliptic from "elliptic";\n\ntype NodeItem = any;\nconst Ec = elliptic.ec;\n`
+        ? `import CryptoJS from "crypto-js";\nimport { JSEncrypt } from "jsencrypt";\nimport elliptic from "elliptic";\n\ntype NodeKind = "cipher" | "hash" | "codec" | "custom" | "asymmetric";\ntype NodeMode = "encrypt" | "decrypt" | "encode" | "decode" | "encode/decode" | "hash";\n\ninterface NodeItem {\n  enabled?: boolean;\n  kind: NodeKind;\n  algorithm: string;\n  mode: NodeMode;\n  iterations?: number;\n  key?: string;\n  iv?: string;\n  outputEncoding?: "Hex" | "Base64";\n  shift?: number;\n  xorKey?: string;\n  salt?: string;\n  pepper?: string;\n  spPlacement?: "prefix" | "suffix" | "wrap";\n  rsaPublicKey?: string;\n  rsaPrivateKey?: string;\n  eccCurve?: string;\n  eccPrivateKey?: string;\n  eccPeerPublicKey?: string;\n  dlogPrime?: string;\n  dlogGenerator?: string;\n  dlogPrivate?: string;\n  dlogPeerPublic?: string;\n}\n\ninterface FlowConfig {\n  source: string;\n  globalKey: string;\n  globalIv?: string;\n  nodes: NodeItem[];\n}\n\nconst Ec = elliptic.ec;\n`
         : `const CryptoJS = require("crypto-js");\nconst { JSEncrypt } = require("jsencrypt");\nconst elliptic = require("elliptic");\nconst Ec = elliptic.ec;\n`;
 
       const helpers = `
@@ -369,44 +428,57 @@ function xorByHexKey(text, hexKey, decodeInput=false) {
   for (let i=0;i<raw.length;i++) out[i] = raw[i] ^ key[i % key.length];
   return decodeInput ? out.toString("utf8") : out.toString("base64");
 }
+function shouldApplySpice(node) {
+  return node.kind === "hash" || node.mode === "encrypt" || node.mode === "encode" || node.mode === "encode/decode";
+}
+function applySpice(text, node) {
+  const salt = String(node.salt || "");
+  const pepper = String(node.pepper || "");
+  if (!salt && !pepper) return text;
+  const placement = node.spPlacement || "wrap";
+  if (placement === "prefix") return salt + pepper + text;
+  if (placement === "suffix") return text + salt + pepper;
+  return salt + text + pepper;
+}
 function runNode(input, node, globalKey) {
   let current = input;
   const times = Math.max(1, Number(node.iterations || 1));
   for (let i=0;i<times;i++) {
+    const nodeInput = shouldApplySpice(node) ? applySpice(current, node) : current;
     if (node.kind === "cipher") {
       const key = node.key || globalKey;
       const alg = CryptoJS[node.algorithm];
       if (!alg) throw new Error("unsupported cipher: " + node.algorithm);
-      if (node.mode === "encrypt") current = alg.encrypt(current, key).toString();
+      if (node.mode === "encrypt") current = alg.encrypt(nodeInput, key).toString();
       else current = alg.decrypt(current, key).toString(CryptoJS.enc.Utf8);
     } else if (node.kind === "hash") {
       const alg = CryptoJS[node.algorithm];
-      const h = alg(current);
+      const h = alg(nodeInput);
       current = node.outputEncoding === "Base64" ? CryptoJS.enc.Base64.stringify(h) : CryptoJS.enc.Hex.stringify(h);
     } else if (node.kind === "codec") {
-      if (node.algorithm === "Base64") current = node.mode === "encode" ? Buffer.from(current, "utf8").toString("base64") : Buffer.from(current, "base64").toString("utf8");
-      else if (node.algorithm === "Hex") current = node.mode === "encode" ? Buffer.from(current, "utf8").toString("hex") : Buffer.from(current, "hex").toString("utf8");
-      else if (node.algorithm === "URL") current = node.mode === "encode" ? encodeURIComponent(current) : decodeURIComponent(current);
+      if (node.algorithm === "Base64") current = node.mode === "encode" ? Buffer.from(nodeInput, "utf8").toString("base64") : Buffer.from(current, "base64").toString("utf8");
+      else if (node.algorithm === "Hex") current = node.mode === "encode" ? Buffer.from(nodeInput, "utf8").toString("hex") : Buffer.from(current, "hex").toString("utf8");
+      else if (node.algorithm === "URL") current = node.mode === "encode" ? encodeURIComponent(nodeInput) : decodeURIComponent(current);
       else if (node.algorithm === "Reverse") current = current.split("").reverse().join("");
       else if (node.algorithm === "ROT13") current = rot13(current);
     } else if (node.kind === "custom") {
-      if (node.algorithm === "Caesar") current = node.mode === "encode" ? caesar(current, node.shift || 0) : caesar(current, -(node.shift || 0));
-      else if (node.algorithm === "XOR") current = xorText(current, node.xorKey || globalKey || "");
+      if (node.algorithm === "Caesar") current = node.mode === "encode" ? caesar(nodeInput, node.shift || 0) : caesar(current, -(node.shift || 0));
+      else if (node.algorithm === "XOR") current = xorText(nodeInput, node.xorKey || globalKey || "");
     } else if (node.kind === "asymmetric") {
       if (node.algorithm === "RSA") {
         const jse = new JSEncrypt();
-        if (node.mode === "encrypt") { jse.setPublicKey(node.rsaPublicKey); current = jse.encrypt(current); }
+        if (node.mode === "encrypt") { jse.setPublicKey(node.rsaPublicKey); current = jse.encrypt(nodeInput); }
         else { jse.setPrivateKey(node.rsaPrivateKey); current = jse.decrypt(current); }
       } else if (node.algorithm === "ECC") {
         const ec = new Ec(node.eccCurve || "secp256k1");
         const me = ec.keyFromPrivate(node.eccPrivateKey, "hex");
         const peer = ec.keyFromPublic(node.eccPeerPublicKey, "hex");
         const shared = me.derive(peer.getPublic()).toString(16).padStart(64, "0");
-        current = node.mode === "encrypt" ? xorByHexKey(current, shared, false) : xorByHexKey(current, shared, true);
+        current = node.mode === "encrypt" ? xorByHexKey(nodeInput, shared, false) : xorByHexKey(current, shared, true);
       } else if (node.algorithm === "DLog") {
         const p = BigInt(node.dlogPrime); const x = BigInt(node.dlogPrivate); const y = BigInt(node.dlogPeerPublic || 2);
         const shared = modPow(y, x, p).toString(16).padStart(64, "0");
-        current = node.mode === "encrypt" ? xorByHexKey(current, shared, false) : xorByHexKey(current, shared, true);
+        current = node.mode === "encrypt" ? xorByHexKey(nodeInput, shared, false) : xorByHexKey(current, shared, true);
       }
     }
   }
@@ -414,7 +486,17 @@ function runNode(input, node, globalKey) {
 }
 `;
 
-      const body = `
+      const body = isTs
+        ? `
+const config: FlowConfig = ${JSON.stringify(config, null, 2)};
+let current = config.source;
+for (const node of config.nodes) {
+  if (!node.enabled) continue;
+  current = runNode(current, node, config.globalKey);
+}
+console.log("Output:", current);
+`
+        : `
 const config = ${JSON.stringify(config, null, 2)};
 let current = config.source;
 for (const node of config.nodes) {
@@ -492,7 +574,7 @@ console.log("Output:", current);
       return (
         <div className="footer">
           PWA + RWD + i18n + Pipeline + Code Generator. Security note: ECC/DLog demo uses educational XOR wrapper, not production-grade ECIES.<br />
-          GitHub: <a href="https://github.com/Lian0123/password-cyrpt-deitor" target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>password-cyrpt-deitor</a>
+          GitHub: <a href="https://github.com/Lian0123/password-encrypt-editor" target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>password-encrypt-editor</a>
         </div>
       );
     }
@@ -570,32 +652,33 @@ console.log("Output:", current);
         let current = input;
         const times = Math.max(1, Number(node.iterations) || 1);
         for (let i = 0; i < times; i += 1) {
+          const nodeInput = shouldApplySpice(node) ? applySpice(current, node) : current;
           if (node.kind === "cipher") {
             const keyRaw = node.key || globalKey;
             if (!keyRaw) throw new Error(`${node.algorithm} key required`);
             const alg = CryptoJS[node.algorithm];
             if (!alg) throw new Error(`unsupported algorithm ${node.algorithm}`);
-            current = node.mode === "encrypt" ? alg.encrypt(current, keyRaw).toString() : alg.decrypt(current, keyRaw).toString(CryptoJS.enc.Utf8);
+            current = node.mode === "encrypt" ? alg.encrypt(nodeInput, keyRaw).toString() : alg.decrypt(current, keyRaw).toString(CryptoJS.enc.Utf8);
           } else if (node.kind === "hash") {
             const alg = CryptoJS[node.algorithm];
-            const hashResult = alg(current);
+            const hashResult = alg(nodeInput);
             current = node.outputEncoding === "Base64" ? CryptoJS.enc.Base64.stringify(hashResult) : CryptoJS.enc.Hex.stringify(hashResult);
           } else if (node.kind === "codec") {
-            if (node.algorithm === "Base64") current = node.mode === "encode" ? btoa(unescape(encodeURIComponent(current))) : decodeURIComponent(escape(atob(current)));
-            else if (node.algorithm === "Hex") current = node.mode === "encode" ? CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(current)) : CryptoJS.enc.Hex.parse(current).toString(CryptoJS.enc.Utf8);
-            else if (node.algorithm === "URL") current = node.mode === "encode" ? encodeURIComponent(current) : decodeURIComponent(current);
+            if (node.algorithm === "Base64") current = node.mode === "encode" ? btoa(unescape(encodeURIComponent(nodeInput))) : decodeURIComponent(escape(atob(current)));
+            else if (node.algorithm === "Hex") current = node.mode === "encode" ? CryptoJS.enc.Hex.stringify(CryptoJS.enc.Utf8.parse(nodeInput)) : CryptoJS.enc.Hex.parse(current).toString(CryptoJS.enc.Utf8);
+            else if (node.algorithm === "URL") current = node.mode === "encode" ? encodeURIComponent(nodeInput) : decodeURIComponent(current);
             else if (node.algorithm === "Reverse") current = current.split("").reverse().join("");
             else if (node.algorithm === "ROT13") current = rot13(current);
           } else if (node.kind === "custom") {
-            if (node.algorithm === "Caesar") current = node.mode === "encode" ? caesar(current, node.shift || 0) : caesar(current, -(node.shift || 0));
-            else if (node.algorithm === "XOR") current = xorText(current, node.xorKey || globalKey || "");
+            if (node.algorithm === "Caesar") current = node.mode === "encode" ? caesar(nodeInput, node.shift || 0) : caesar(current, -(node.shift || 0));
+            else if (node.algorithm === "XOR") current = xorText(nodeInput, node.xorKey || globalKey || "");
           } else if (node.kind === "asymmetric") {
             if (node.algorithm === "RSA") {
               const jse = new JSEncrypt();
               if (node.mode === "encrypt") {
                 if (!node.rsaPublicKey) throw new Error("RSA public key required");
                 jse.setPublicKey(node.rsaPublicKey);
-                const out = jse.encrypt(current);
+                const out = jse.encrypt(nodeInput);
                 if (!out) throw new Error("RSA encrypt failed");
                 current = out;
               } else {
@@ -610,13 +693,13 @@ console.log("Output:", current);
               const me = ec.keyFromPrivate(node.eccPrivateKey, "hex");
               const peer = ec.keyFromPublic(node.eccPeerPublicKey, "hex");
               const shared = me.derive(peer.getPublic()).toString(16).padStart(64, "0");
-              current = node.mode === "encrypt" ? xorByHexKey(current, shared, false) : xorByHexKey(current, shared, true);
+              current = node.mode === "encrypt" ? xorByHexKey(nodeInput, shared, false) : xorByHexKey(current, shared, true);
             } else if (node.algorithm === "DLog") {
               const p = BigInt(node.dlogPrime || "2147483647");
               const x = BigInt(node.dlogPrivate || "12345");
               const y = BigInt(node.dlogPeerPublic || "2");
               const shared = modPow(y, x, p).toString(16).padStart(64, "0");
-              current = node.mode === "encrypt" ? xorByHexKey(current, shared, false) : xorByHexKey(current, shared, true);
+              current = node.mode === "encrypt" ? xorByHexKey(nodeInput, shared, false) : xorByHexKey(current, shared, true);
             }
           }
         }
@@ -735,6 +818,74 @@ console.log("Output:", current);
         setGeneratedCode(code);
       }
 
+      function snapshot() {
+        return {
+          lang,
+          theme,
+          source,
+          globalKey,
+          globalIv,
+          finalOutput,
+          nodes,
+          activeCount,
+          status,
+          timestamp: new Date().toISOString()
+        };
+      }
+
+      useEffect(() => {
+        window.__CFS_BRIDGE = {
+          getState: () => snapshot(),
+          setLanguage: (value) => {
+            const mapped = normalizeLang(value);
+            setLang(mapped);
+            return { ok: true, lang: mapped };
+          },
+          setTheme: (value) => {
+            const next = value === "light" ? "light" : "dark";
+            if ((theme === "dark" && next === "light") || (theme === "light" && next === "dark")) {
+              toggleTheme();
+            }
+            return { ok: true, theme: next };
+          },
+          runPipeline: () => {
+            runPipeline();
+            return { ok: true, status: "pipeline_started" };
+          },
+          setNodes: ({ nodes: incomingNodes, replace = true } = {}) => {
+            if (!Array.isArray(incomingNodes)) {
+              throw new Error("nodes array required");
+            }
+            const normalized = incomingNodes.map((node) => ({ ...defaultNode(node.kind || "cipher"), ...node, id: uid() }));
+            setNodes((prev) => (replace ? normalized : [...prev, ...normalized]));
+            return { ok: true, mode: replace ? "replace" : "append", changed: normalized.length };
+          },
+          exportNodeCode: ({ typescript = false } = {}) => {
+            const isTs = Boolean(typescript);
+            const code = generateNodeProgram({ source, globalKey, globalIv, nodes }, isTs);
+            setExportAsTs(isTs);
+            setGeneratedCode(code);
+            return {
+              ok: true,
+              format: isTs ? "ts" : "js",
+              filename: isTs ? "crypto-flow.ts" : "crypto-flow.js",
+              code
+            };
+          },
+          exportConfig: () => ({ source, globalKey, globalIv, nodes }),
+          importConfig: (config) => {
+            if (!config || !Array.isArray(config.nodes)) {
+              throw new Error("config.nodes required");
+            }
+            setSource(String(config.source ?? ""));
+            setGlobalKey(String(config.globalKey ?? ""));
+            setGlobalIv(String(config.globalIv ?? ""));
+            setNodes(config.nodes.map((n) => ({ ...defaultNode(n.kind || "cipher"), ...n, id: uid() })));
+            return { ok: true };
+          }
+        };
+      }, [lang, theme, source, globalKey, globalIv, nodes, finalOutput, activeCount, status]);
+
       useEffect(() => { runPipeline(); }, [langVer]);
 
       return (
@@ -758,13 +909,14 @@ console.log("Output:", current);
                 <label>{t("globalKey")}<input type="text" value={globalKey} onChange={(e) => setGlobalKey(e.target.value)} /></label>
                 <label>{t("globalIv")}<input type="text" value={globalIv} onChange={(e) => setGlobalIv(e.target.value)} /></label>
               </div>
-              <div className="row">
-                <button className="button" onClick={() => setGlobalKey(randomString(24))}>random key</button>
-                <button className="button" onClick={() => setGlobalIv(randomString(16))}>random iv</button>
-                <button className="button" onClick={() => setSource("")}>clear input</button>
-                <button className="button primary" onClick={runPipeline}>{t("run")}</button>
-                <button className="button warn" onClick={reversePipeline}>reverse flow</button>
+              <div className="row toolbar">
+                <button className="button" title="產生一組隨機全域 Key" onClick={() => setGlobalKey(randomString(24))}>random key</button>
+                <button className="button" title="產生一組隨機全域 IV" onClick={() => setGlobalIv(randomString(16))}>random iv</button>
+                <button className="button" title="清空輸入內容" onClick={() => setSource("")}>clear input</button>
+                <button className="button primary" title="執行整條節點流程" onClick={runPipeline}>{t("run")}</button>
+                <button className="button warn" title="反向節點順序並嘗試切換解密模式" onClick={reversePipeline}>reverse flow</button>
               </div>
+              <div className="mini" style={{ marginTop: 6 }}>工具列：先設定 key/iv，再執行流程。</div>
 
               <div className="divider"></div>
               <FlowDiagram title={t("flow")} nodes={nodes} />
@@ -776,7 +928,7 @@ console.log("Output:", current);
                   <button key={name} className="button" onClick={() => setNodes(PRESETS[name].map((p) => ({ ...defaultNode(p.kind), ...p, id: uid() })))}>{name}</button>
                 ))}
               </div>
-              <div className="row" style={{ marginTop: 8 }}>
+                <div className="row toolbar" style={{ marginTop: 8 }}>
                 <button className="button" onClick={exportConfig}>export JSON</button>
                 <button className="button" onClick={importConfig}>import JSON</button>
                 <button className="button" onClick={saveConfigToLocal}>save local</button>
@@ -789,14 +941,15 @@ console.log("Output:", current);
             <section className="panel2">
               <div className="card">
                 <h3>2) Nodes</h3>
-                <div className="row">
-                  <button className="button" onClick={() => addNode("cipher")}>{t("addCipher")}</button>
-                  <button className="button" onClick={() => addNode("hash")}>{t("addHash")}</button>
-                  <button className="button" onClick={() => addNode("codec")}>{t("addCodec")}</button>
-                  <button className="button" onClick={() => addNode("custom")}>{t("addCustom")}</button>
-                  <button className="button" onClick={() => addNode("asymmetric")}>{t("addAsym")}</button>
-                  <button className="button danger" onClick={() => setNodes([defaultNode("cipher")])}>{t("reset")}</button>
+                <div className="row toolbar">
+                  <button className="button" title="新增可逆加密節點" onClick={() => addNode("cipher")}>{t("addCipher")}</button>
+                  <button className="button" title="新增雜湊節點（不可逆）" onClick={() => addNode("hash")}>{t("addHash")}</button>
+                  <button className="button" title="新增編碼節點" onClick={() => addNode("codec")}>{t("addCodec")}</button>
+                  <button className="button" title="新增自訂節點（Caesar/XOR）" onClick={() => addNode("custom")}>{t("addCustom")}</button>
+                  <button className="button" title="新增非對稱節點（RSA/ECC/DLog）" onClick={() => addNode("asymmetric")}>{t("addAsym")}</button>
+                  <button className="button danger" title="重置為預設單一節點" onClick={() => setNodes([defaultNode("cipher")])}>{t("reset")}</button>
                 </div>
+                <div className="mini" style={{ marginTop: 6 }}>節點工具列：新增節點後可拖曳排序或使用 ↑↓。</div>
                 <div className="pipeline">
                   {nodes.map((node, index) => (
                     <div
@@ -810,10 +963,10 @@ console.log("Output:", current);
                       <div className="node-top">
                         <div className="node-title"><span className="drag-handle">☰ drag</span>#{index + 1} · {summary(node)}</div>
                         <div className="row">
-                          <button className="button" onClick={() => moveNode(index, index - 1)}>↑</button>
-                          <button className="button" onClick={() => moveNode(index, index + 1)}>↓</button>
-                          <button className={`button ${node.enabled ? "ok" : ""}`} onClick={() => updateNode(node.id, { enabled: !node.enabled })}>{node.enabled ? "on" : "off"}</button>
-                          <button className="button danger" onClick={() => removeNode(node.id)}>del</button>
+                          <button className="button" title="向上移動節點" onClick={() => moveNode(index, index - 1)}>↑</button>
+                          <button className="button" title="向下移動節點" onClick={() => moveNode(index, index + 1)}>↓</button>
+                          <button className={`button ${node.enabled ? "ok" : ""}`} title="切換節點啟用狀態" onClick={() => updateNode(node.id, { enabled: !node.enabled })}>{node.enabled ? "on" : "off"}</button>
+                          <button className="button danger" title="刪除此節點" onClick={() => removeNode(node.id)}>del</button>
                         </div>
                       </div>
                       <div className="row">
@@ -838,6 +991,22 @@ console.log("Output:", current);
                         </label>
                         <label>iterations
                           <input type="number" min="1" max="20" value={node.iterations} onChange={(e) => updateNode(node.id, { iterations: Math.max(1, Math.min(20, Number(e.target.value) || 1)) })} />
+                        </label>
+                      </div>
+
+                      <div className="row">
+                        <label>salt
+                          <input type="text" value={node.salt || ""} onChange={(e) => updateNode(node.id, { salt: e.target.value })} placeholder="optional salt" />
+                        </label>
+                        <label>pepper
+                          <input type="text" value={node.pepper || ""} onChange={(e) => updateNode(node.id, { pepper: e.target.value })} placeholder="optional pepper" />
+                        </label>
+                        <label>spice placement
+                          <select value={node.spPlacement || "wrap"} onChange={(e) => updateNode(node.id, { spPlacement: e.target.value })}>
+                            <option value="prefix">prefix</option>
+                            <option value="suffix">suffix</option>
+                            <option value="wrap">wrap</option>
+                          </select>
                         </label>
                       </div>
 
@@ -888,8 +1057,8 @@ console.log("Output:", current);
                 <div className="mini">{t("output")}</div>
                 <div className="output">{finalOutput || "(empty)"}</div>
                 <div className="row" style={{ marginTop: 8 }}>
-                  <button className="button" onClick={() => copyText(finalOutput).then(() => setStatus({ ok:true, msg:"Output copied" }))}>copy output</button>
-                  <button className="button" onClick={runQualityTests}>{t("tests")}</button>
+                  <button className="button" title="複製最終輸出內容" onClick={() => copyText(finalOutput).then(() => setStatus({ ok:true, msg:"Output copied" }))}>copy output</button>
+                  <button className="button" title="執行內建品質測試" onClick={runQualityTests}>{t("tests")}</button>
                 </div>
                 <div className="mini" style={{ marginTop: 8 }}>{t("stepOutput")}</div>
                 <div className="step-list">
@@ -903,11 +1072,11 @@ console.log("Output:", current);
 
           <section className="card">
             <h3>{t("exportCode")}</h3>
-            <div className="row">
+            <div className="row toolbar">
               <label style={{ maxWidth: 220 }}>format<select value={exportAsTs ? "ts" : "js"} onChange={(e) => setExportAsTs(e.target.value === "ts")}><option value="js">Node.js JavaScript</option><option value="ts">Node.js TypeScript</option></select></label>
-              <button className="button primary" onClick={buildCode}>generate code</button>
-              <button className="button" onClick={() => copyText(generatedCode).then(() => setStatus({ ok:true, msg:"Code copied" }))}>copy code</button>
-              <button className="button" onClick={() => downloadText(exportAsTs ? "crypto-flow.ts" : "crypto-flow.js", generatedCode)}>download file</button>
+              <button className="button primary" title="依目前設定產生可執行程式" onClick={buildCode}>generate code</button>
+              <button className="button" title="複製生成的程式碼" onClick={() => copyText(generatedCode).then(() => setStatus({ ok:true, msg:"Code copied" }))}>copy code</button>
+              <button className="button" title="下載程式碼檔案" onClick={() => downloadText(exportAsTs ? "crypto-flow.ts" : "crypto-flow.js", generatedCode)}>download file</button>
             </div>
             <div className="codebox">{generatedCode || "click generate code"}</div>
             <div className="mini">install deps: npm i crypto-js jsencrypt elliptic</div>
@@ -923,6 +1092,134 @@ console.log("Output:", current);
         <App />
       </ThemeProvider>
     );
+
+    const webmcpRuntime = {
+      protocol: null,
+      toolsByName: new Map()
+    };
+
+    const WEBMCP_FALLBACK_PROTOCOL = {
+      name: "webmcp.crypto-flow",
+      version: "1.0.0",
+      rpc: { version: "2.0", requestType: "WEBMCP_RPC", responseType: "WEBMCP_RPC_RESULT" },
+      methods: {
+        "tools/list": {
+          request: { jsonrpc: "2.0", id: "string", method: "tools/list", params: { type: "object", properties: {}, additionalProperties: false } },
+          response: {
+            jsonrpc: "2.0",
+            id: "string",
+            result: {
+              type: "object",
+              required: ["protocol", "version", "tools"],
+              properties: {
+                protocol: { type: "string" },
+                version: { type: "string" },
+                tools: { type: "array", items: { type: "object" } }
+              }
+            }
+          }
+        },
+        "tools/call": {
+          request: {
+            jsonrpc: "2.0",
+            id: "string",
+            method: "tools/call",
+            params: { type: "object", required: ["name", "arguments"], properties: { name: { type: "string" }, arguments: { type: "object" } } }
+          },
+          response: { jsonrpc: "2.0", id: "string", result: "object|array|string|number|boolean|null" }
+        }
+      },
+      tools: [
+        { name: "card.getState", description: "Get current state", argumentsSchema: { type: "object", properties: {} } },
+        { name: "card.setLanguage", description: "Set language", argumentsSchema: { type: "object", required: ["lang"], properties: { lang: { type: "string" } } } },
+        { name: "card.setTheme", description: "Set theme", argumentsSchema: { type: "object", required: ["theme"], properties: { theme: { type: "string" } } } },
+        { name: "pipeline.run", description: "Run pipeline", argumentsSchema: { type: "object", properties: {} } },
+        { name: "pipeline.setNodes", description: "Set or append nodes", argumentsSchema: { type: "object", required: ["nodes"], properties: { replace: { type: "boolean" }, nodes: { type: "array", items: { type: "object" } } } } },
+        { name: "code.exportNodeJS", description: "Export current flow to Node.js/TypeScript", argumentsSchema: { type: "object", properties: { typescript: { type: "boolean" } } } },
+        { name: "config.export", description: "Export config", argumentsSchema: { type: "object", properties: {} } },
+        { name: "config.import", description: "Import config", argumentsSchema: { type: "object", required: ["config"], properties: { config: { type: "object" } } } }
+      ]
+    };
+
+    async function loadWebMcpProtocol() {
+      if (location.protocol === "file:") {
+        webmcpRuntime.protocol = WEBMCP_FALLBACK_PROTOCOL;
+        webmcpRuntime.toolsByName = new Map((WEBMCP_FALLBACK_PROTOCOL.tools || []).map((tool) => [tool.name, tool]));
+        return;
+      }
+      try {
+        const response = await fetch("./webmcp.json", { cache: "no-store" });
+        const protocol = await response.json();
+        webmcpRuntime.protocol = protocol;
+        webmcpRuntime.toolsByName = new Map((protocol.tools || []).map((tool) => [tool.name, tool]));
+      } catch (error) {
+        webmcpRuntime.protocol = WEBMCP_FALLBACK_PROTOCOL;
+        webmcpRuntime.toolsByName = new Map((WEBMCP_FALLBACK_PROTOCOL.tools || []).map((tool) => [tool.name, tool]));
+      }
+    }
+
+    function createRpcResponse(id, result, error) {
+      return {
+        jsonrpc: "2.0",
+        id: id ?? null,
+        ...(error ? { error } : { result })
+      };
+    }
+
+    async function handleToolCall(name, args = {}) {
+      const bridge = window.__CFS_BRIDGE;
+      if (!bridge) throw new Error("bridge_not_ready");
+
+      if (name === "card.getState") return bridge.getState();
+      if (name === "card.setLanguage") return bridge.setLanguage(args.lang);
+      if (name === "card.setTheme") return bridge.setTheme(args.theme);
+      if (name === "pipeline.run") return bridge.runPipeline();
+      if (name === "pipeline.setNodes") return bridge.setNodes(args);
+      if (name === "code.exportNodeJS") return bridge.exportNodeCode(args);
+      if (name === "config.export") return bridge.exportConfig();
+      if (name === "config.import") return bridge.importConfig(args.config);
+
+      throw new Error(`unsupported_tool:${name}`);
+    }
+
+    async function handleRpc(payload) {
+      if (!payload || payload.jsonrpc !== "2.0") {
+        return createRpcResponse(payload?.id, null, { code: -32600, message: "Invalid Request" });
+      }
+
+      if (payload.method === "tools/list") {
+        return createRpcResponse(payload.id, {
+          protocol: webmcpRuntime.protocol?.name || "webmcp.crypto-flow",
+          version: webmcpRuntime.protocol?.version || "1.0.0",
+          tools: webmcpRuntime.protocol?.tools || []
+        });
+      }
+
+      if (payload.method === "tools/call") {
+        try {
+          const toolName = payload?.params?.name;
+          const toolArgs = payload?.params?.arguments || {};
+          const result = await handleToolCall(toolName, toolArgs);
+          return createRpcResponse(payload.id, result);
+        } catch (error) {
+          return createRpcResponse(payload.id, null, { code: -32000, message: error.message });
+        }
+      }
+
+      return createRpcResponse(payload.id, null, { code: -32601, message: "Method not found" });
+    }
+
+    window.addEventListener("message", async (event) => {
+      const expectedRequestType = webmcpRuntime.protocol?.rpc?.requestType || "WEBMCP_RPC";
+      if (event?.data?.type !== expectedRequestType) return;
+      const responsePayload = await handleRpc(event.data.payload);
+      if (event.source && typeof event.source.postMessage === "function") {
+        const responseType = webmcpRuntime.protocol?.rpc?.responseType || "WEBMCP_RPC_RESULT";
+        event.source.postMessage({ type: responseType, payload: responsePayload }, "*");
+      }
+    });
+
+    loadWebMcpProtocol();
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => {

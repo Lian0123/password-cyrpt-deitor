@@ -3,387 +3,728 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="WebMCP 調用範例頁，支援 tools/list 與 tools/call 測試，包含 postMessage 與 HTTP 模式。" />
-  <meta name="robots" content="index,follow" />
-  <title>WebMCP 調用範例頁</title>
+  <meta name="description" content="WebMCP Example：透過 postMessage 呼叫 tools/list 與 tools/call，並展示 webmcp.json 協議。" />
+  <title>WebMCP Example</title>
   <style>
     :root {
-      --bg: #f4f6fb;
+      --bg: #f5f8ff;
       --panel: #ffffff;
-      --line: #d9e0ef;
-      --text: #172033;
-      --muted: #5d6a86;
-      --primary: #315efb;
-      --ok: #0f9d58;
-      --warn: #c26400;
-      --danger: #cc2f45;
+      --line: #d8e1f3;
+      --text: #1d2745;
+      --muted: #607090;
+      --primary: #2f63ff;
+      --ok: #1f9d63;
+      --warn: #b86a12;
+      --danger: #c63852;
       --radius: 12px;
+      --shadow: 0 8px 24px rgba(28, 40, 72, 0.08);
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
-      background: var(--bg);
+      background: linear-gradient(180deg, #f9fbff 0%, var(--bg) 100%);
       color: var(--text);
       font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", Arial, sans-serif;
       line-height: 1.5;
     }
-    .wrap {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 16px;
-      display: grid;
-      gap: 12px;
-    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 16px; display: grid; gap: 12px; }
     .card {
       background: var(--panel);
       border: 1px solid var(--line);
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
       padding: 14px;
+      transition: transform .15s ease, box-shadow .2s ease;
     }
-    h1, h2, h3 { margin: 0 0 8px; }
+    .card:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(28, 40, 72, 0.12); }
+    h1,h2,h3 { margin: 0 0 8px; line-height: 1.35; }
     .sub { color: var(--muted); font-size: 13px; }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; width: 100%; }
+    .toolbar-lite {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f7faff;
+      padding: 8px;
+    }
     .badge {
       display: inline-flex;
       align-items: center;
-      border-radius: 999px;
       border: 1px solid var(--line);
+      border-radius: 999px;
       padding: 4px 10px;
-      font-size: 12px;
       color: var(--muted);
+      font-size: 12px;
       background: #f8faff;
     }
-    .ok { color: var(--ok); }
-    .warn { color: var(--warn); }
-    .danger { color: var(--danger); }
-    input, select, textarea {
-      width: 100%;
+    .badge.ok { color: var(--ok); }
+    .badge.warn { color: var(--warn); }
+    .badge.danger { color: var(--danger); }
+    .step {
+      border: 1px dashed var(--line);
+      border-radius: 10px;
+      background: #fbfdff;
+      padding: 10px;
+      min-height: 108px;
+    }
+    .step-title { font-size: 13px; font-weight: 700; margin-bottom: 4px; }
+    .step-desc { font-size: 12px; color: var(--muted); }
+    .btn {
+      appearance: none;
       border: 1px solid var(--line);
-      background: #fff;
+      background: #edf3ff;
       color: var(--text);
       border-radius: 10px;
+      min-height: 38px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .12s ease, filter .18s ease, box-shadow .18s ease, border-color .18s ease;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.02); box-shadow: 0 4px 14px rgba(47, 99, 255, 0.15); }
+    .btn.primary { background: var(--primary); color: #fff; border-color: #3a6bff; }
+    .btn.ghost { background: #fff; }
+    .btn.warn { background: #fff5e9; }
+    .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+    select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fff;
+      color: var(--text);
+      min-height: 36px;
       padding: 9px 10px;
       font-size: 13px;
       outline: none;
-      min-height: 36px;
     }
     textarea {
-      min-height: 150px;
+      min-height: 145px;
       resize: vertical;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size: 12px;
       line-height: 1.45;
     }
-    .btn {
-      appearance: none;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      background: #f4f7ff;
-      color: var(--text);
-      padding: 8px 12px;
-      cursor: pointer;
-      font-size: 12px;
-      min-height: 34px;
-    }
-    .btn.primary { background: var(--primary); color: #fff; border-color: #315efb; }
-    .btn.ghost { background: #fff; }
-    .btn.warn { background: #fff3e3; }
-    .two { display: grid; grid-template-columns: 220px 1fr; gap: 10px; align-items: start; }
-    code.inline {
-      background: #eef3ff;
-      border: 1px solid #d7e1ff;
-      border-radius: 6px;
-      padding: 1px 6px;
-      font-size: 12px;
-    }
     .output {
       border: 1px solid var(--line);
       border-radius: 10px;
       background: #f9fbff;
+      min-height: 120px;
       padding: 10px;
-      min-height: 140px;
       white-space: pre-wrap;
       word-break: break-word;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       font-size: 12px;
       line-height: 1.4;
     }
-    .footer { text-align: center; font-size: 12px; color: var(--muted); }
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: 1fr; }
-      .two { grid-template-columns: 1fr; }
+    .tool-list { display: grid; gap: 8px; margin-top: 8px; }
+    .tool-item {
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      background: #fff;
+      padding: 8px;
+    }
+    .tool-item .name { font-weight: 700; font-size: 12px; }
+    .tool-item .desc { font-size: 12px; color: var(--muted); margin-top: 4px; }
+    .selected-row {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #f8fbff;
+      padding: 8px;
+    }
+    .selected-actions { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; }
+    .selected-desc { font-size: 12px; color: var(--muted); }
+    .btn.small { min-height: 34px; padding: 6px 10px; font-size: 12px; }
+    .footer { text-align: center; color: var(--muted); font-size: 12px; }
+    @media (max-width: 980px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 680px) {
+      .btn { width: 100%; }
+      .actions { grid-template-columns: 1fr; }
+      .selected-actions { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card">
-      <h1 id="title">WebMCP 調用範例頁</h1>
-      <div class="sub" id="intro">用途：測試 tools/list、tools/call，並驗證 postMessage / HTTP 兩種傳輸。請先開啟主頁。</div>
+      <h1>WebMCP 調用範例頁</h1>
+      <div class="sub">本頁會載入 <b>webmcp.json</b>，用 postMessage 呼叫主頁的 <b>tools/list</b> 與 <b>tools/call</b>。</div>
       <div class="row" style="margin-top:8px;">
-        <span class="badge">主頁 URL（同網域） <code class="inline">./index.html</code></span>
-        <span class="badge" id="status">連線狀態：尚未連線</span>
+        <span class="badge">Protocol: <b id="protoName" style="margin-left:4px;">loading...</b></span>
+        <span class="badge">Version: <b id="protoVersion" style="margin-left:4px;">-</b></span>
+        <span class="badge" id="protoCheck">協議檢查：進行中</span>
+        <span class="badge warn" id="connStatus">連線狀態：未連線</span>
       </div>
     </section>
 
-    <section class="card two">
-      <div>
-        <h3 id="transportTitle">Transport模式</h3>
-        <select id="transport">
-          <option value="postMessage">postMessage</option>
-          <option value="http">HTTP</option>
-        </select>
-        <div class="sub" id="transportDesc" style="margin-top:6px;">目前 WebMCP 已移除 auth 驗證，可直接呼叫。</div>
-      </div>
-      <div class="row">
-        <button class="btn primary" id="btnConnect">開啟主頁並建立連線</button>
-        <button class="btn" id="btnToolsList">tools/list</button>
-        <button class="btn" id="btnCardState">card.getState</button>
-        <button class="btn warn" id="btnLangFr">切換語言 → fr-FR</button>
-      </div>
-    </section>
-
-    <section class="grid">
-      <div class="card">
-        <h2 id="rpcTitle">工具呼叫範例</h2>
-        <div class="row" style="margin-bottom:8px;">
-          <button class="btn ghost" id="loadTemplate">載入範例</button>
-          <button class="btn ghost" id="copyTemplate">複製 RPC</button>
+    <section class="card grid3">
+      <div class="step">
+        <div class="step-title">Step 1：載入協議</div>
+        <div class="step-desc">讀取 webmcp.json 的 methods/tools/exampleConfig。</div>
+        <div class="actions toolbar-lite" style="margin-top:8px;">
+          <button class="btn" id="btnReloadProtocol">重新載入協議</button>
         </div>
-        <label class="sub" id="argsTitle">arguments (JSON)</label>
-        <textarea id="rpcEditor">{
-  "jsonrpc": "2.0",
-  "id": "demo-1",
-  "method": "tools/call",
-  "params": {
-    "name": "card.getState",
-    "arguments": {}
-  }
-}</textarea>
+      </div>
+      <div class="step">
+        <div class="step-title">Step 2：連線主頁</div>
+        <div class="step-desc">開啟 index.html 建立 postMessage 通道。</div>
+        <div class="actions toolbar-lite" style="margin-top:8px;">
+          <button class="btn primary" id="btnConnect">開啟主頁並連線</button>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-title">Step 3：呼叫 tools/list</div>
+        <div class="step-desc">取得可用工具並顯示在下方列表。</div>
+        <div class="actions toolbar-lite" style="margin-top:8px;">
+          <button class="btn" id="btnToolsList">呼叫 tools/list</button>
+          <button class="btn ghost" id="btnDemoFlow">執行操作範例</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid2">
+      <div class="card">
+        <h2>Tool Caller</h2>
+        <div class="sub">從 webmcp.json tools 動態產生選單與 arguments 範本。</div>
         <div class="row" style="margin-top:8px;">
-          <button class="btn primary" id="btnCall">送出 RPC</button>
+          <label style="flex:1; min-width:180px;">Transport
+            <select id="transport"><option value="postMessage">postMessage</option><option value="http">HTTP</option></select>
+          </label>
+          <label style="flex:2; min-width:260px;">Tool
+            <select id="toolSelect"></select>
+          </label>
         </div>
+        <label style="display:grid; gap:6px; margin-top:8px;">arguments (JSON)
+          <textarea id="argsEditor">{}</textarea>
+        </label>
+        <div class="actions toolbar-lite" style="margin-top:8px;">
+          <button class="btn" id="btnApplyTemplate">載入此工具範例</button>
+          <button class="btn" id="btnBuildRpc">生成 RPC</button>
+          <button class="btn primary" id="btnCall">送出 tools/call</button>
+          <button class="btn warn" id="btnCopyRpc">複製 RPC</button>
+        </div>
+        <div class="selected-row">
+          <label>slected examples
+            <select id="exampleSelect"></select>
+          </label>
+          <div class="selected-actions">
+            <button class="btn small ghost" id="btnApplySelected">套用到 Tool Caller</button>
+            <button class="btn small" id="btnRunSelected">執行選定範例</button>
+            <button class="btn small" id="btnRunAllExamples">依序執行全部範例</button>
+          </div>
+          <div class="selected-desc" id="exampleDesc">(尚未選擇範例)</div>
+          <div class="output" id="exampleOutput" style="min-height:90px;">(尚未執行範例)</div>
+        </div>
+        <label style="display:grid; gap:6px; margin-top:8px;">RPC Payload
+          <textarea id="rpcEditor"></textarea>
+        </label>
       </div>
 
       <div class="card">
-        <h2 id="responseTitle">tools/call Response</h2>
-        <div class="output" id="output">(尚無輸出)</div>
+        <h2>Protocol Reflection</h2>
+        <div class="sub">以下資料直接來自 webmcp.json，確保協議與介面一致。</div>
+        <div class="output" id="methodsOutput" style="margin-top:8px;">(loading methods...)</div>
+        <div class="output" id="configOutput" style="margin-top:8px;">(loading exampleConfig...)</div>
       </div>
     </section>
 
     <section class="card">
-      <div class="row" style="justify-content:space-between;">
-        <div>
-          <h3 id="langTitle">語言</h3>
-          <div class="sub" id="langDesc">多語介面示範（繁中 / English / 日本語）</div>
-        </div>
-        <select id="lang" style="max-width:220px;">
-          <option value="zh">繁體中文</option>
-          <option value="en">English</option>
-          <option value="ja">日本語</option>
-        </select>
-      </div>
+      <h2>Available Tools (tools/list 回傳)</h2>
+      <div id="toolsListBox" class="tool-list"><div class="sub">尚未呼叫 tools/list</div></div>
     </section>
 
-    <div class="footer">WebMCP Example · Crypto Flow Studio</div>
+    <section class="card">
+      <h2>Response</h2>
+      <div class="output" id="responseOutput">(尚無輸出)</div>
+    </section>
+
+    <div class="footer">WebMCP Example · Protocol-driven</div>
   </div>
 
   <script>
-    const i18n = {
-      zh: {
-        title: "WebMCP 調用範例頁",
-        intro: "用途：測試 tools/list、tools/call，並驗證 postMessage / HTTP 兩種傳輸。請先開啟主頁。",
-        disconnected: "連線狀態：尚未連線",
-        connected: "連線狀態：已連線",
-        transportTitle: "Transport模式",
-        transportDesc: "目前 WebMCP 已移除 auth 驗證，可直接呼叫。",
-        connect: "開啟主頁並建立連線",
-        toolsList: "tools/list",
-        cardState: "card.getState",
-        switchFr: "切換語言 → fr-FR",
-        rpcTitle: "工具呼叫範例",
-        loadTemplate: "載入範例",
-        copyTemplate: "複製 RPC",
-        argsTitle: "arguments (JSON)",
-        sendRpc: "送出 RPC",
-        responseTitle: "tools/call Response",
-        langTitle: "語言",
-        langDesc: "多語介面示範（繁中 / English / 日本語）"
+    const WEBMCP_FALLBACK_PROTOCOL = {
+      name: "webmcp.crypto-flow",
+      title: "Crypto Flow Studio WebMCP",
+      version: "1.0.0",
+      transport: ["postMessage", "http"],
+      rpc: {
+        version: "2.0",
+        requestType: "WEBMCP_RPC",
+        responseType: "WEBMCP_RPC_RESULT"
       },
-      en: {
-        title: "WebMCP Call Example",
-        intro: "Use this page to test tools/list and tools/call via postMessage or HTTP transport.",
-        disconnected: "Connection: disconnected",
-        connected: "Connection: connected",
-        transportTitle: "Transport Mode",
-        transportDesc: "Auth is removed in current WebMCP, direct calls are allowed.",
-        connect: "Open index and connect",
-        toolsList: "tools/list",
-        cardState: "card.getState",
-        switchFr: "Switch language → fr-FR",
-        rpcTitle: "Tool Call Example",
-        loadTemplate: "Load template",
-        copyTemplate: "Copy RPC",
-        argsTitle: "arguments (JSON)",
-        sendRpc: "Send RPC",
-        responseTitle: "tools/call Response",
-        langTitle: "Language",
-        langDesc: "Multilingual UI demo (zh / en / ja)"
+      methods: {
+        "tools/list": {
+          request: { jsonrpc: "2.0", id: "string", method: "tools/list", params: { type: "object", properties: {}, additionalProperties: false } },
+          response: {
+            jsonrpc: "2.0",
+            id: "string",
+            result: {
+              type: "object",
+              required: ["protocol", "version", "tools"],
+              properties: {
+                protocol: { type: "string" },
+                version: { type: "string" },
+                tools: { type: "array", items: { type: "object" } }
+              }
+            }
+          }
+        },
+        "tools/call": {
+          request: {
+            jsonrpc: "2.0",
+            id: "string",
+            method: "tools/call",
+            params: { type: "object", required: ["name", "arguments"], properties: { name: { type: "string" }, arguments: { type: "object" } } }
+          },
+          response: { jsonrpc: "2.0", id: "string", result: "object" }
+        }
       },
-      ja: {
-        title: "WebMCP 呼び出しサンプル",
-        intro: "tools/list と tools/call を postMessage / HTTP で検証します。先に主ページを開いてください。",
-        disconnected: "接続状態：未接続",
-        connected: "接続状態：接続済み",
-        transportTitle: "Transportモード",
-        transportDesc: "現在の WebMCP は auth 不要で直接呼び出せます。",
-        connect: "主ページを開いて接続",
-        toolsList: "tools/list",
-        cardState: "card.getState",
-        switchFr: "言語切替 → fr-FR",
-        rpcTitle: "ツール呼び出し例",
-        loadTemplate: "テンプレート読込",
-        copyTemplate: "RPCをコピー",
-        argsTitle: "arguments (JSON)",
-        sendRpc: "RPC送信",
-        responseTitle: "tools/call Response",
-        langTitle: "言語",
-        langDesc: "多言語UIデモ（繁中 / 英語 / 日本語）"
+      tools: [
+        { name: "card.getState", description: "Get current UI/language/theme/config state", argumentsSchema: { type: "object", properties: {} } },
+        { name: "card.setLanguage", description: "Set UI language", argumentsSchema: { type: "object", required: ["lang"], properties: { lang: { type: "string", enum: ["zh", "en", "ja"] } } } },
+        { name: "card.setTheme", description: "Set UI theme", argumentsSchema: { type: "object", required: ["theme"], properties: { theme: { type: "string", enum: ["dark", "light"] } } } },
+        { name: "pipeline.run", description: "Run current encryption pipeline", argumentsSchema: { type: "object", properties: {} } },
+        { name: "pipeline.setNodes", description: "Set or append nodes", argumentsSchema: { type: "object", required: ["nodes"], properties: { replace: { type: "boolean" }, nodes: { type: "array", items: { type: "object" } } } } },
+        { name: "code.exportNodeJS", description: "Export current flow to Node.js/TypeScript", argumentsSchema: { type: "object", properties: { typescript: { type: "boolean" } } } },
+        { name: "config.export", description: "Export current pipeline config", argumentsSchema: { type: "object", properties: {} } },
+        { name: "config.import", description: "Import pipeline config", argumentsSchema: { type: "object", required: ["config"], properties: { config: { type: "object" } } } }
+      ],
+      exampleConfig: {
+        source: "My@Password#2026",
+        globalKey: "super-secret-key",
+        globalIv: "",
+        nodes: [
+          { kind: "cipher", algorithm: "AES", mode: "encrypt", iterations: 1, enabled: true },
+          { kind: "hash", algorithm: "SHA256", mode: "hash", iterations: 1, enabled: true }
+        ]
       }
     };
 
+    let protocol = null;
     let peerWindow = null;
     let connected = false;
+    const pendingMap = new Map();
 
-    const elements = {
-      title: document.getElementById("title"),
-      intro: document.getElementById("intro"),
-      status: document.getElementById("status"),
-      transportTitle: document.getElementById("transportTitle"),
-      transportDesc: document.getElementById("transportDesc"),
-      btnConnect: document.getElementById("btnConnect"),
-      btnToolsList: document.getElementById("btnToolsList"),
-      btnCardState: document.getElementById("btnCardState"),
-      btnLangFr: document.getElementById("btnLangFr"),
-      rpcTitle: document.getElementById("rpcTitle"),
-      loadTemplate: document.getElementById("loadTemplate"),
-      copyTemplate: document.getElementById("copyTemplate"),
-      argsTitle: document.getElementById("argsTitle"),
-      btnCall: document.getElementById("btnCall"),
-      responseTitle: document.getElementById("responseTitle"),
-      langTitle: document.getElementById("langTitle"),
-      langDesc: document.getElementById("langDesc"),
-      output: document.getElementById("output"),
-      rpcEditor: document.getElementById("rpcEditor"),
+    const dom = {
+      protoName: document.getElementById("protoName"),
+      protoVersion: document.getElementById("protoVersion"),
+      protoCheck: document.getElementById("protoCheck"),
+      connStatus: document.getElementById("connStatus"),
       transport: document.getElementById("transport"),
-      lang: document.getElementById("lang")
+      toolSelect: document.getElementById("toolSelect"),
+      argsEditor: document.getElementById("argsEditor"),
+      rpcEditor: document.getElementById("rpcEditor"),
+      methodsOutput: document.getElementById("methodsOutput"),
+      configOutput: document.getElementById("configOutput"),
+      toolsListBox: document.getElementById("toolsListBox"),
+      responseOutput: document.getElementById("responseOutput"),
+      exampleSelect: document.getElementById("exampleSelect"),
+      exampleDesc: document.getElementById("exampleDesc"),
+      exampleOutput: document.getElementById("exampleOutput"),
+      btnApplySelected: document.getElementById("btnApplySelected"),
+      btnRunSelected: document.getElementById("btnRunSelected")
     };
 
-    function setOutput(obj) {
-      elements.output.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    function reqType() {
+      return protocol?.rpc?.requestType || "WEBMCP_RPC";
     }
 
-    function setLang(lang) {
-      const t = i18n[lang] || i18n.zh;
-      elements.title.textContent = t.title;
-      elements.intro.textContent = t.intro;
-      elements.transportTitle.textContent = t.transportTitle;
-      elements.transportDesc.textContent = t.transportDesc;
-      elements.btnConnect.textContent = t.connect;
-      elements.btnToolsList.textContent = t.toolsList;
-      elements.btnCardState.textContent = t.cardState;
-      elements.btnLangFr.textContent = t.switchFr;
-      elements.rpcTitle.textContent = t.rpcTitle;
-      elements.loadTemplate.textContent = t.loadTemplate;
-      elements.copyTemplate.textContent = t.copyTemplate;
-      elements.argsTitle.textContent = t.argsTitle;
-      elements.btnCall.textContent = t.sendRpc;
-      elements.responseTitle.textContent = t.responseTitle;
-      elements.langTitle.textContent = t.langTitle;
-      elements.langDesc.textContent = t.langDesc;
-      elements.status.textContent = connected ? t.connected : t.disconnected;
+    function resType() {
+      return protocol?.rpc?.responseType || "WEBMCP_RPC_RESULT";
+    }
+
+    function setConnected(next) {
+      connected = Boolean(next);
+      dom.connStatus.className = `badge ${connected ? "ok" : "warn"}`;
+      dom.connStatus.textContent = connected ? "連線狀態：已連線" : "連線狀態：未連線";
+    }
+
+    function setProtocolCheck(ok, message) {
+      dom.protoCheck.className = `badge ${ok ? "ok" : "danger"}`;
+      dom.protoCheck.textContent = `協議檢查：${message}`;
+    }
+
+    function setResponse(payload) {
+      dom.responseOutput.textContent = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+    }
+
+    function setExampleOutput(payload) {
+      dom.exampleOutput.textContent = typeof payload === "string" ? payload : JSON.stringify(payload, null, 2);
+    }
+
+    function toolDefaultArgs(name) {
+      if (name === "card.setLanguage") return { lang: "en" };
+      if (name === "card.setTheme") return { theme: "light" };
+      if (name === "pipeline.setNodes") return { replace: true, nodes: protocol?.exampleConfig?.nodes || [] };
+      if (name === "code.exportNodeJS") return { typescript: false };
+      if (name === "config.import") return { config: protocol?.exampleConfig || {} };
+      return {};
+    }
+
+    function buildRpc(method, params) {
+      return {
+        jsonrpc: protocol?.rpc?.version || "2.0",
+        id: `rpc-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        method,
+        params
+      };
+    }
+
+    function getExampleCases() {
+      return [
+        {
+          id: "ex-tools-list",
+          title: "A. tools/list [state]",
+          desc: "列出所有可用工具與 arguments schema",
+          method: "tools/list",
+          params: {}
+        },
+        {
+          id: "ex-card-state",
+          title: "B. card.getState [state]",
+          desc: "讀取主頁目前語言、主題、流程等狀態",
+          method: "tools/call",
+          params: { name: "card.getState", arguments: {} }
+        },
+        {
+          id: "ex-card-lang",
+          title: "C. card.setLanguage [settings]",
+          desc: "切換語言為日本語（ja）",
+          method: "tools/call",
+          params: { name: "card.setLanguage", arguments: { lang: "ja" } }
+        },
+        {
+          id: "ex-card-theme",
+          title: "D. card.setTheme [settings]",
+          desc: "切換主題為 light",
+          method: "tools/call",
+          params: { name: "card.setTheme", arguments: { theme: "light" } }
+        },
+        {
+          id: "ex-pipeline-run",
+          title: "E. pipeline.run [pipeline]",
+          desc: "觸發主頁加密流程執行",
+          method: "tools/call",
+          params: { name: "pipeline.run", arguments: {} }
+        },
+        {
+          id: "ex-pipeline-setnodes",
+          title: "F. pipeline.setNodes [pipeline]",
+          desc: "用 exampleConfig 節點覆蓋主頁節點流程",
+          method: "tools/call",
+          params: { name: "pipeline.setNodes", arguments: { replace: true, nodes: protocol?.exampleConfig?.nodes || [] } }
+        },
+        {
+          id: "ex-code-export",
+          title: "G. code.exportNodeJS [code]",
+          desc: "匯出 Node.js 程式碼（JavaScript）",
+          method: "tools/call",
+          params: { name: "code.exportNodeJS", arguments: { typescript: false } }
+        },
+        {
+          id: "ex-config-export",
+          title: "H. config.export [settings]",
+          desc: "匯出主頁目前 pipeline 設定",
+          method: "tools/call",
+          params: { name: "config.export", arguments: {} }
+        },
+        {
+          id: "ex-config-import",
+          title: "I. config.import [settings]",
+          desc: "匯入 webmcp.json 內建 exampleConfig",
+          method: "tools/call",
+          params: { name: "config.import", arguments: { config: protocol?.exampleConfig || {} } }
+        }
+      ];
+    }
+
+    function renderExamples() {
+      const examples = getExampleCases();
+      dom.exampleSelect.innerHTML = examples.map((example) => `<option value="${example.id}">${example.title}</option>`).join("");
+      if (examples.length) dom.exampleDesc.textContent = examples[0].desc;
+      else dom.exampleDesc.textContent = "(尚未選擇範例)";
+    }
+
+    function findExampleById(exampleId) {
+      return getExampleCases().find((example) => example.id === exampleId);
+    }
+
+    function selectedExampleId() {
+      return dom.exampleSelect.value;
+    }
+
+    function applyExampleToCaller(exampleId) {
+      const example = findExampleById(exampleId);
+      if (!example) throw new Error(`example not found: ${exampleId}`);
+
+      if (example.method === "tools/call") {
+        dom.toolSelect.value = example.params.name;
+        dom.argsEditor.value = JSON.stringify(example.params.arguments || {}, null, 2);
+      }
+
+      const payload = buildRpc(example.method, example.params);
+      dom.rpcEditor.value = JSON.stringify(payload, null, 2);
+      setExampleOutput({ action: "apply", example: example.title, payload });
+      return payload;
+    }
+
+    async function runExample(exampleId) {
+      const example = findExampleById(exampleId);
+      if (!example) throw new Error(`example not found: ${exampleId}`);
+      const payload = applyExampleToCaller(exampleId);
+      const result = await sendRpc(payload);
+      if (example.method === "tools/list") {
+        const tools = result?.result?.tools;
+        if (Array.isArray(tools)) renderToolsList(tools);
+      }
+      setResponse(result);
+      setExampleOutput({ action: "run", example: example.title, result });
+      return result;
+    }
+
+    function renderToolsList(tools) {
+      if (!Array.isArray(tools) || !tools.length) {
+        dom.toolsListBox.innerHTML = '<div class="sub">無可用工具</div>';
+        return;
+      }
+      dom.toolsListBox.innerHTML = tools.map((tool) => {
+        const schema = JSON.stringify(tool.argumentsSchema || {}, null, 2);
+        return `<div class="tool-item"><div class="name">${tool.name}</div><div class="desc">${tool.description || ""}</div><div class="output" style="margin-top:6px; min-height:60px;">${schema}</div></div>`;
+      }).join("");
+    }
+
+    function refreshToolSelect() {
+      dom.toolSelect.innerHTML = "";
+      (protocol?.tools || []).forEach((tool) => {
+        const option = document.createElement("option");
+        option.value = tool.name;
+        option.textContent = `${tool.name} — ${tool.description || ""}`;
+        dom.toolSelect.appendChild(option);
+      });
+      const selected = dom.toolSelect.value || protocol?.tools?.[0]?.name || "card.getState";
+      const args = toolDefaultArgs(selected);
+      dom.argsEditor.value = JSON.stringify(args, null, 2);
+      dom.rpcEditor.value = JSON.stringify(buildRpc("tools/call", { name: selected, arguments: args }), null, 2);
+    }
+
+    function validateProtocol(nextProtocol) {
+      const hasRpc = Boolean(nextProtocol?.rpc?.requestType && nextProtocol?.rpc?.responseType);
+      const hasToolsList = Boolean(nextProtocol?.methods?.["tools/list"]?.request && nextProtocol?.methods?.["tools/list"]?.response);
+      const hasToolsCall = Boolean(nextProtocol?.methods?.["tools/call"]?.request && nextProtocol?.methods?.["tools/call"]?.response);
+      const hasTools = Array.isArray(nextProtocol?.tools) && nextProtocol.tools.length > 0;
+      if (hasRpc && hasToolsList && hasToolsCall && hasTools) {
+        setProtocolCheck(true, "通過");
+        return true;
+      }
+      setProtocolCheck(false, "缺少必要欄位");
+      return false;
+    }
+
+    async function loadProtocol() {
+      if (location.protocol === "file:") {
+        protocol = WEBMCP_FALLBACK_PROTOCOL;
+      } else {
+        try {
+          const response = await fetch("./webmcp.json", { cache: "no-store" });
+          protocol = await response.json();
+        } catch (error) {
+          protocol = WEBMCP_FALLBACK_PROTOCOL;
+          setResponse({ warning: "fetch webmcp.json failed, fallback protocol used", reason: error.message });
+        }
+      }
+      dom.protoName.textContent = protocol.name || "webmcp.crypto-flow";
+      dom.protoVersion.textContent = protocol.version || "1.0.0";
+      dom.methodsOutput.textContent = JSON.stringify(protocol.methods || {}, null, 2);
+      dom.configOutput.textContent = JSON.stringify(protocol.exampleConfig || {}, null, 2);
+      validateProtocol(protocol);
+      refreshToolSelect();
+      renderExamples();
     }
 
     function postMessageRpc(payload) {
-      if (!peerWindow || peerWindow.closed) throw new Error("主頁尚未連線");
-      peerWindow.postMessage({ type: "WEBMCP_RPC", payload }, "*");
-      return { sent: true, transport: "postMessage", payload };
+      if (!peerWindow || peerWindow.closed) {
+        return Promise.reject(new Error("主頁未連線，請先按「開啟主頁並連線」"));
+      }
+      return new Promise((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          pendingMap.delete(payload.id);
+          reject(new Error("postMessage timeout: no response"));
+        }, 8000);
+        pendingMap.set(payload.id, { resolve, reject, timeoutId });
+        peerWindow.postMessage({ type: reqType(), payload }, "*");
+      });
     }
 
     async function httpRpc(payload) {
       return {
-        sent: false,
-        transport: "http",
-        note: "此為示例頁，請接到你後端 /webmcp endpoint",
-        payload
+        jsonrpc: payload.jsonrpc,
+        id: payload.id,
+        result: {
+          note: "HTTP mode is placeholder. Connect backend /webmcp endpoint.",
+          payload
+        }
       };
     }
 
-    function getTemplate(method = "tools/call", tool = "card.getState", args = {}) {
-      return {
-        jsonrpc: "2.0",
-        id: `demo-${Date.now()}`,
-        method,
-        params: method === "tools/list" ? {} : { name: tool, arguments: args }
-      };
+    async function sendRpc(payload) {
+      if (dom.transport.value === "postMessage") return postMessageRpc(payload);
+      return httpRpc(payload);
     }
+
+    async function runToolsList() {
+      const payload = buildRpc("tools/list", {});
+      const result = await sendRpc(payload);
+      setResponse(result);
+      const tools = result?.result?.tools;
+      if (!Array.isArray(tools)) {
+        throw new Error("tools/list response format invalid: result.tools must be array");
+      }
+      renderToolsList(tools);
+      return result;
+    }
+
+    document.getElementById("btnReloadProtocol").onclick = async () => {
+      try {
+        await loadProtocol();
+        setResponse("webmcp.json 重新載入成功");
+      } catch (error) {
+        setResponse({ error: error.message });
+      }
+    };
 
     document.getElementById("btnConnect").onclick = () => {
       peerWindow = window.open("./index.html", "crypto-flow-main");
-      connected = !!peerWindow;
-      setLang(elements.lang.value);
-      setOutput({ ok: connected, message: connected ? "主頁已開啟，請允許彈窗" : "開啟失敗" });
+      setConnected(Boolean(peerWindow));
+      setResponse({ ok: connected, message: connected ? "主頁已開啟" : "開啟失敗（可能被瀏覽器阻擋彈窗）" });
     };
 
     document.getElementById("btnToolsList").onclick = async () => {
-      const payload = getTemplate("tools/list");
-      const result = elements.transport.value === "postMessage" ? postMessageRpc(payload) : await httpRpc(payload);
-      setOutput(result);
+      try {
+        await runToolsList();
+      } catch (error) {
+        setResponse({ error: error.message });
+      }
     };
 
-    document.getElementById("btnCardState").onclick = async () => {
-      const payload = getTemplate("tools/call", "card.getState", {});
-      const result = elements.transport.value === "postMessage" ? postMessageRpc(payload) : await httpRpc(payload);
-      setOutput({
-        ...result,
-        expected: "回傳 cardType、lang、theme、cardData、貼圖與 WebMCP 狀態資訊。"
-      });
+    dom.toolSelect.onchange = () => {
+      const name = dom.toolSelect.value;
+      const args = toolDefaultArgs(name);
+      dom.argsEditor.value = JSON.stringify(args, null, 2);
+      dom.rpcEditor.value = JSON.stringify(buildRpc("tools/call", { name, arguments: args }), null, 2);
     };
 
-    document.getElementById("btnLangFr").onclick = async () => {
-      const payload = getTemplate("tools/call", "card.setLanguage", { lang: "fr-FR" });
-      const result = elements.transport.value === "postMessage" ? postMessageRpc(payload) : await httpRpc(payload);
-      setOutput(result);
+    document.getElementById("btnApplyTemplate").onclick = () => {
+      const name = dom.toolSelect.value;
+      const args = toolDefaultArgs(name);
+      dom.argsEditor.value = JSON.stringify(args, null, 2);
+      dom.rpcEditor.value = JSON.stringify(buildRpc("tools/call", { name, arguments: args }), null, 2);
     };
 
-    document.getElementById("loadTemplate").onclick = () => {
-      elements.rpcEditor.value = JSON.stringify(getTemplate("tools/call", "card.getState", {}), null, 2);
-    };
-
-    document.getElementById("copyTemplate").onclick = async () => {
-      await navigator.clipboard.writeText(elements.rpcEditor.value);
-      setOutput("已複製 RPC 模板");
+    document.getElementById("btnBuildRpc").onclick = () => {
+      try {
+        const name = dom.toolSelect.value;
+        const args = JSON.parse(dom.argsEditor.value || "{}");
+        dom.rpcEditor.value = JSON.stringify(buildRpc("tools/call", { name, arguments: args }), null, 2);
+      } catch (error) {
+        setResponse({ error: error.message });
+      }
     };
 
     document.getElementById("btnCall").onclick = async () => {
       try {
-        const payload = JSON.parse(elements.rpcEditor.value);
-        const result = elements.transport.value === "postMessage" ? postMessageRpc(payload) : await httpRpc(payload);
-        setOutput(result);
-      } catch (e) {
-        setOutput({ error: e.message });
+        const payload = JSON.parse(dom.rpcEditor.value || "{}");
+        const result = await sendRpc(payload);
+        setResponse(result);
+      } catch (error) {
+        setResponse({ error: error.message });
+      }
+    };
+
+    document.getElementById("btnCopyRpc").onclick = async () => {
+      await navigator.clipboard.writeText(dom.rpcEditor.value || "");
+      setResponse("RPC 已複製");
+    };
+
+    document.getElementById("btnDemoFlow").onclick = async () => {
+      try {
+        const listRes = await runToolsList();
+        const stateRes = await sendRpc(buildRpc("tools/call", { name: "card.getState", arguments: {} }));
+        setResponse({
+          demo: "ok",
+          listCount: listRes?.result?.tools?.length || 0,
+          sampleState: stateRes?.result || {}
+        });
+      } catch (error) {
+        setResponse({ demo: "failed", error: error.message });
+      }
+    };
+
+    dom.exampleSelect.onchange = () => {
+      const next = findExampleById(selectedExampleId());
+      dom.exampleDesc.textContent = next?.desc || "(尚未選擇範例)";
+    };
+
+    dom.btnApplySelected.onclick = () => {
+      try {
+        const id = selectedExampleId();
+        applyExampleToCaller(id);
+      } catch (error) {
+        setExampleOutput({ error: error.message });
+      }
+    };
+
+    dom.btnRunSelected.onclick = async () => {
+      try {
+        const id = selectedExampleId();
+        await runExample(id);
+      } catch (error) {
+        setExampleOutput({ error: error.message });
+      }
+    };
+
+    document.getElementById("btnRunAllExamples").onclick = async () => {
+      try {
+        const logs = [];
+        for (const example of getExampleCases()) {
+          const result = await runExample(example.id);
+          logs.push({ example: example.title, ok: !result?.error, id: result?.id || null });
+        }
+        setExampleOutput({ action: "run-all", logs });
+      } catch (error) {
+        setExampleOutput({ action: "run-all", error: error.message });
       }
     };
 
     window.addEventListener("message", (event) => {
-      if (event?.data?.type === "WEBMCP_RPC_RESULT") {
-        setOutput(event.data.payload);
+      if (peerWindow && event.source !== peerWindow) return;
+      if (event?.data?.type !== resType()) return;
+      const payload = event.data.payload;
+      const reqId = payload?.id;
+      if (reqId && pendingMap.has(reqId)) {
+        const pending = pendingMap.get(reqId);
+        clearTimeout(pending.timeoutId);
+        pendingMap.delete(reqId);
+        pending.resolve(payload);
+      } else {
+        setResponse(payload);
       }
     });
 
-    elements.lang.onchange = (e) => setLang(e.target.value);
-    setLang("zh");
+    setConnected(false);
+    loadProtocol().catch((error) => {
+      setResponse({ error: `load protocol failed: ${error.message}` });
+    });
   </script>
 </body>
 </html>

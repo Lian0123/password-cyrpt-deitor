@@ -21,7 +21,7 @@
 - `index.html`：主工具（React + 加解密流程 + 匯出器）
 - `manifest.json`：PWA 應用設定
 - `sw.js`：Service Worker 離線快取
-- `WEBMCP.md`：WEBMCP 規格說明
+- `webmcp.json`：WEBMCP 協議與工具宣告（machine-readable）
 - `webmcp-example.html`：WEBMCP 調用與管理示例頁
 - `skill.json`：Skill 能力宣告
 - `docs/overview.svg`：README 截圖示意
@@ -85,7 +85,7 @@ python3 -m http.server 8000
 
 ## WEBMCP 與 Skill
 
-- `WEBMCP.md`：描述可交換的節點配置格式
+- `webmcp.json`：描述 `tools/list`、`tools/call` 工具與設定結構
 - `webmcp-example.html`：提供呼叫測試與管理介面（`tools/list`、`tools/call`、多語）
 - `skill.json`：宣告本工具可用能力（流程編輯、匯出、語言/主題切換等）
 
@@ -105,7 +105,7 @@ python3 -m http.server 8000
 
 ## 專案連結
 
-- GitHub: https://github.com/Lian0123/password-cyrpt-deitor
+- GitHub: https://github.com/Lian0123/password-encrypt-editor
 
 ## 維護建議（定期更新）
 
@@ -116,3 +116,4 @@ python3 -m http.server 8000
 3. 執行頁面內建測試（`Quality Tests`）並記錄結果。
 4. 更新 `manifest.json`、`sitemap.xml`、`robots.txt` 與版本號。
 5. 依使用者回饋調整節點操作流程與錯誤提示。
+6. 確認 `webmcp.json`、`webmcp-example.html`、`index.html` 三者協議欄位保持一致。

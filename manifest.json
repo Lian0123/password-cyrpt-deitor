@@ -6,6 +6,7 @@
   "scope": "./",
   "start_url": "./index.html",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
   "orientation": "portrait-primary",
   "background_color": "#0b1020",
   "theme_color": "#5c8dff",
@@ -16,6 +17,14 @@
       "short_name": "WebMCP",
       "url": "./webmcp-example.html",
       "description": "Open WebMCP call example"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "docs/overview.svg",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
     }
   ],
   "icons": [

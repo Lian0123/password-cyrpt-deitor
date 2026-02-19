@@ -16,6 +16,6 @@
   "entry": {
     "web": "index.html",
     "example": "webmcp-example.html",
-    "schema": "WEBMCP.md"
+    "schema": "webmcp.json"
   }
 }

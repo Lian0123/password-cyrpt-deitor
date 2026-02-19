@@ -1,0 +1,215 @@
+{
+  "name": "webmcp.crypto-flow",
+  "title": "Crypto Flow Studio WebMCP",
+  "version": "1.0.0",
+  "transport": ["postMessage", "http"],
+  "rpc": {
+    "version": "2.0",
+    "requestType": "WEBMCP_RPC",
+    "responseType": "WEBMCP_RPC_RESULT"
+  },
+  "methods": {
+    "tools/list": {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": "string",
+        "method": "tools/list",
+        "params": {
+          "type": "object",
+          "properties": {},
+          "additionalProperties": false
+        }
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": "string",
+        "result": {
+          "type": "object",
+          "required": ["protocol", "version", "tools"],
+          "properties": {
+            "protocol": { "type": "string" },
+            "version": { "type": "string" },
+            "tools": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["name", "argumentsSchema"],
+                "properties": {
+                  "name": { "type": "string" },
+                  "description": { "type": "string" },
+                  "argumentsSchema": { "type": "object" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "tools/call": {
+      "request": {
+        "jsonrpc": "2.0",
+        "id": "string",
+        "method": "tools/call",
+        "params": {
+          "type": "object",
+          "required": ["name", "arguments"],
+          "properties": {
+            "name": { "type": "string" },
+            "arguments": { "type": "object" }
+          }
+        }
+      },
+      "response": {
+        "jsonrpc": "2.0",
+        "id": "string",
+        "result": "object|array|string|number|boolean|null"
+      }
+    }
+  },
+  "operationGuide": [
+    "Step 1: load webmcp.json protocol and inspect tools",
+    "Step 2: open index.html and establish postMessage connection",
+    "Step 3: call tools/list to verify available tools",
+    "Step 4: choose tool, fill arguments JSON, send tools/call",
+    "Step 5: use pipeline.setNodes to update node flow dynamically",
+    "Step 6: use code.exportNodeJS to generate reusable Node.js/TypeScript code",
+    "Step 7: use config.import with exampleConfig to sync encryption options"
+  ],
+  "tools": [
+    {
+      "name": "card.getState",
+      "description": "Get current UI/language/theme/config state",
+      "argumentsSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "card.setLanguage",
+      "description": "Set UI language",
+      "argumentsSchema": {
+        "type": "object",
+        "required": ["lang"],
+        "properties": {
+          "lang": { "type": "string", "enum": ["zh", "en", "ja"] }
+        }
+      }
+    },
+    {
+      "name": "card.setTheme",
+      "description": "Set UI theme",
+      "argumentsSchema": {
+        "type": "object",
+        "required": ["theme"],
+        "properties": {
+          "theme": { "type": "string", "enum": ["dark", "light"] }
+        }
+      }
+    },
+    {
+      "name": "pipeline.run",
+      "description": "Run current encryption pipeline",
+      "argumentsSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "pipeline.setNodes",
+      "description": "Set or append pipeline nodes",
+      "argumentsSchema": {
+        "type": "object",
+        "required": ["nodes"],
+        "properties": {
+          "replace": { "type": "boolean" },
+          "nodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["kind", "algorithm", "mode", "iterations"],
+              "properties": {
+                "kind": { "type": "string" },
+                "algorithm": { "type": "string" },
+                "mode": { "type": "string" },
+                "iterations": { "type": "number" },
+                "enabled": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "code.exportNodeJS",
+      "description": "Export current flow to Node.js or TypeScript source code",
+      "argumentsSchema": {
+        "type": "object",
+        "properties": {
+          "typescript": { "type": "boolean" }
+        }
+      }
+    },
+    {
+      "name": "config.export",
+      "description": "Export current pipeline config",
+      "argumentsSchema": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "config.import",
+      "description": "Import pipeline config",
+      "argumentsSchema": {
+        "type": "object",
+        "required": ["config"],
+        "properties": {
+          "config": {
+            "type": "object",
+            "required": ["source", "globalKey", "nodes"],
+            "properties": {
+              "source": { "type": "string" },
+              "globalKey": { "type": "string" },
+              "globalIv": { "type": "string" },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["kind", "algorithm", "mode", "iterations"],
+                  "properties": {
+                    "kind": { "type": "string" },
+                    "algorithm": { "type": "string" },
+                    "mode": { "type": "string" },
+                    "iterations": { "type": "number" },
+                    "enabled": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "exampleConfig": {
+    "source": "My@Password#2026",
+    "globalKey": "super-secret-key",
+    "globalIv": "",
+    "nodes": [
+      {
+        "kind": "cipher",
+        "algorithm": "AES",
+        "mode": "encrypt",
+        "iterations": 1,
+        "enabled": true
+      },
+      {
+        "kind": "hash",
+        "algorithm": "SHA256",
+        "mode": "hash",
+        "iterations": 1,
+        "enabled": true
+      }
+    ]
+  }
+}

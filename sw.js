@@ -1,8 +1,10 @@
-const CACHE_NAME = "crypto-flow-studio-v2";
+const CACHE_NAME = "crypto-flow-studio-v3";
 const ASSETS = [
   "./",
   "./index.html",
   "./webmcp-example.html",
+  "./webmcp.json",
+  "./offline.html",
   "./manifest.json",
   "./robots.txt",
   "./sitemap.xml",
@@ -30,16 +32,30 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((cached) => {
-      if (cached) return cached;
-      return fetch(event.request)
+  const { request } = event;
+  if (request.mode === "navigate") {
+    event.respondWith(
+      fetch(request)
         .then((response) => {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           return response;
         })
-        .catch(() => caches.match("./index.html"));
+        .catch(() => caches.match(request).then((cached) => cached || caches.match("./offline.html")))
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(request).then((cached) => {
+      if (cached) return cached;
+      return fetch(request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match("./offline.html"));
     })
   );
 });
