@@ -1,11 +1,24 @@
-const CACHE_NAME = "crypto-flow-studio-v3";
+const CACHE_NAME = "crypto-flow-studio-v4";
 const ASSETS = [
   "./",
   "./index.html",
   "./webmcp-example.html",
   "./webmcp.json",
   "./offline.html",
+  "./manifest.webmanifest",
   "./manifest.json",
+  "./icons/apple-touch-icon.png",
+  "./icons/icon-72.png",
+  "./icons/icon-96.png",
+  "./icons/icon-128.png",
+  "./icons/icon-144.png",
+  "./icons/icon-152.png",
+  "./icons/icon-167.png",
+  "./icons/icon-180.png",
+  "./icons/icon-192.png",
+  "./icons/icon-384.png",
+  "./icons/icon-512.png",
+  "./icons/icon-maskable-512.png",
   "./robots.txt",
   "./sitemap.xml",
   "https://unpkg.com/react@18/umd/react.development.js",
@@ -33,6 +46,20 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;
+  const requestUrl = new URL(request.url);
+
+  if (request.method !== "GET") return;
+
+  if (requestUrl.origin !== self.location.origin) {
+    event.respondWith(
+      caches.match(request).then((cached) => {
+        if (cached) return cached;
+        return fetch(request).catch(() => caches.match("./offline.html"));
+      })
+    );
+    return;
+  }
+
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
@@ -47,10 +74,13 @@ self.addEventListener("fetch", (event) => {
   }
 
   event.respondWith(
-    caches.match(request).then((cached) => {
+    caches.match(request, { ignoreSearch: true }).then((cached) => {
       if (cached) return cached;
       return fetch(request)
         .then((response) => {
+          if (!response || response.status !== 200 || response.type !== "basic") {
+            return response;
+          }
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
           return response;

@@ -10,7 +10,7 @@
 - 節點流程：可新增/刪除/拖曳節點，形成 `輸入 -> 一次加密 -> 二次加密 ...`
 - 匯出程式：可匯出 `Node.js JavaScript` 或 `TypeScript`
 - i18n：支援 `繁體中文 / English / 日本語`
-- PWA：含 `manifest.json` 與 `sw.js`，可離線載入
+- PWA：含 `manifest.webmanifest` 與 `sw.js`，可離線載入
 - RWD：手機與桌機皆可使用
 - 黑白主題：提供 `black/white` 主題切換
 - 配置保存：支援本機 `localStorage` 快速保存與載入
@@ -19,7 +19,7 @@
 ## 檔案結構
 
 - `index.html`：主工具（React + 加解密流程 + 匯出器）
-- `manifest.json`：PWA 應用設定
+- `manifest.webmanifest`：PWA 應用設定
 - `sw.js`：Service Worker 離線快取
 - `webmcp.json`：WEBMCP 協議與工具宣告（machine-readable）
 - `webmcp-example.html`：WEBMCP 調用與管理示例頁
@@ -114,6 +114,6 @@ python3 -m http.server 8000
 1. 檢查瀏覽器相容性（Chrome / Safari / Edge / Firefox）。
 2. 檢查手機/平板/桌機版面（RWD）與主題切換一致性。
 3. 執行頁面內建測試（`Quality Tests`）並記錄結果。
-4. 更新 `manifest.json`、`sitemap.xml`、`robots.txt` 與版本號。
+4. 更新 `manifest.webmanifest`、`sitemap.xml`、`robots.txt` 與版本號。
 5. 依使用者回饋調整節點操作流程與錯誤提示。
 6. 確認 `webmcp.json`、`webmcp-example.html`、`index.html` 三者協議欄位保持一致。

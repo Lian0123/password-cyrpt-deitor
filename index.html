@@ -2,13 +2,18 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#5c8dff" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#5c8dff" id="theme-color-meta" />
+  <meta name="color-scheme" content="dark light" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="CryptoFlow" />
-  <link rel="manifest" href="manifest.json" />
+  <meta name="format-detection" content="telephone=no" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png" />
   <link rel="alternate" type="application/json" href="webmcp.json" title="WebMCP Protocol" />
   <title>Crypto Flow Studio</title>
     <meta name="description" content="Crypto Flow Studio 是可拖曳節點的加密流程工具，支援 AES、RSA、SHA-256、ECC、DLog、PWA、i18n 與 Node/TS 程式碼匯出。" />
@@ -25,6 +30,11 @@
     <meta name="twitter:description" content="Single-file React crypto pipeline editor with code generator and PWA support." />
     <link rel="canonical" href="https://github.com/Lian0123/password-encrypt-editor" />
   <style>
+    html {
+      font-size: 100%;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
     :root {
       --bg: #0b1020;
       --bg-accent: #1d2f62;
@@ -51,6 +61,10 @@
       --danger: #ff6f7a;
       --ok: #37d39b;
       --warn: #ffb347;
+      --chart-bg: #0f1936;
+      --chart-item-bg: #111d3d;
+      --chart-text: #dce6ff;
+      --chart-arrow: #90a6dd;
       --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
       --radius: 14px;
     }
@@ -80,6 +94,10 @@
       --danger: #9d2a2a;
       --ok: #1f6c3c;
       --warn: #8a5d1d;
+      --chart-bg: #f5f8ff;
+      --chart-item-bg: #ffffff;
+      --chart-text: #1f2a46;
+      --chart-arrow: #6c7ca3;
       --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
     }
     * { box-sizing: border-box; }
@@ -158,11 +176,11 @@
     .preset-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
     .flow {
       display:grid; gap:6px; max-height: 300px; overflow:auto; padding:10px;
-      border:1px dashed var(--line); border-radius:12px; background:var(--surface-flow);
+      border:1px dashed var(--line); border-radius:12px; background:var(--chart-bg);
     }
-    .flow-item { border:1px solid var(--line); border-radius:10px; background:var(--surface); padding:8px; font-size:12px; }
+    .flow-item { border:1px solid var(--line); border-radius:10px; background:var(--chart-item-bg); color: var(--chart-text); padding:8px; font-size:12px; }
     .flow-item { transition: background .2s ease, border-color .2s ease; }
-    .arrow { align-self:center; justify-self:center; color:var(--muted); font-weight:700; }
+    .arrow { align-self:center; justify-self:center; color:var(--chart-arrow); font-weight:700; }
     .footer { color: var(--muted); font-size: 12px; text-align: center; padding-bottom: 6px; line-height: 1.6; }
     a { color: var(--primary); }
     @media (min-width: 981px) {
@@ -519,6 +537,10 @@ console.log("Output:", current);
       useEffect(() => {
         document.body.classList.toggle("theme-light", theme === "light");
         localStorage.setItem("cfs.theme", theme);
+        const meta = document.getElementById("theme-color-meta");
+        if (meta) {
+          meta.setAttribute("content", theme === "light" ? "#f0f4ff" : "#5c8dff");
+        }
       }, [theme]);
       function toggleTheme() {
         setTheme((prev) => (prev === "dark" ? "light" : "dark"));
@@ -526,7 +548,7 @@ console.log("Output:", current);
       return <ThemeContext.Provider value={{ theme, toggleTheme }}>{children}</ThemeContext.Provider>;
     }
 
-    function HeaderBar({ t, nodesCount, activeCount, status, theme, toggleTheme, lang, setLang }) {
+    function HeaderBar({ t, nodesCount, activeCount, status, theme, toggleTheme, lang, setLang, canInstall, onInstallClick }) {
       return (
         <div className="header">
           <div>
@@ -537,6 +559,7 @@ console.log("Output:", current);
             <span className="badge">nodes: {nodesCount}</span>
             <span className="badge">active: {activeCount}</span>
             <span className={`badge ${status.ok ? "status-ok" : "status-err"}`}>{status.msg}</span>
+            {canInstall && <button className="button primary" onClick={onInstallClick}>install app</button>}
             <button className="button" onClick={toggleTheme}>theme: {theme === "dark" ? "black" : "white"}</button>
             <label style={{ minWidth: 120 }}>
               {t("language")}
@@ -596,6 +619,8 @@ console.log("Output:", current);
       const [generatedCode, setGeneratedCode] = useState("");
       const [exportAsTs, setExportAsTs] = useState(false);
       const [testReport, setTestReport] = useState("");
+      const [installPromptEvent, setInstallPromptEvent] = useState(null);
+      const [canInstall, setCanInstall] = useState(false);
 
       useEffect(() => {
         const saved = localStorage.getItem("cfs.savedConfig");
@@ -606,6 +631,25 @@ console.log("Output:", current);
         i18next.changeLanguage(lang);
         setLangVer((v) => v + 1);
       }, [lang]);
+
+      useEffect(() => {
+        function onBeforeInstallPrompt(event) {
+          event.preventDefault();
+          setInstallPromptEvent(event);
+          setCanInstall(true);
+        }
+        function onAppInstalled() {
+          setInstallPromptEvent(null);
+          setCanInstall(false);
+          setStatus({ ok: true, msg: "App installed" });
+        }
+        window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+        window.addEventListener("appinstalled", onAppInstalled);
+        return () => {
+          window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+          window.removeEventListener("appinstalled", onAppInstalled);
+        };
+      }, []);
 
       const activeCount = useMemo(() => nodes.filter((n) => n.enabled).length, [nodes]);
 
@@ -818,6 +862,27 @@ console.log("Output:", current);
         setGeneratedCode(code);
       }
 
+      async function installApp() {
+        if (!installPromptEvent) {
+          setStatus({ ok: false, msg: "Install not available on this device" });
+          return;
+        }
+        installPromptEvent.prompt();
+        try {
+          const choice = await installPromptEvent.userChoice;
+          if (choice?.outcome === "accepted") {
+            setStatus({ ok: true, msg: "Install accepted" });
+          } else {
+            setStatus({ ok: false, msg: "Install dismissed" });
+          }
+        } catch (e) {
+          setStatus({ ok: false, msg: "Install failed" });
+        } finally {
+          setInstallPromptEvent(null);
+          setCanInstall(false);
+        }
+      }
+
       function snapshot() {
         return {
           lang,
@@ -897,6 +962,8 @@ console.log("Output:", current);
             status={status}
             theme={theme}
             toggleTheme={toggleTheme}
+            canInstall={canInstall}
+            onInstallClick={installApp}
             lang={lang}
             setLang={setLang}
           />
